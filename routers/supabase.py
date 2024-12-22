@@ -1,7 +1,7 @@
 import os
 
 import logfire
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from managers.supabase import SupabaseManager
@@ -11,12 +11,11 @@ supabase_manager_cache = {}
 supabase_router = APIRouter()
 
 
-def get_access_token(request: Request) -> str:
+def get_access_token(authorization: str = Header(...)) -> str:
     """リクエストヘッダーからアクセストークンを取得"""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
-    return auth_header.split("Bearer ")[1]
+    return authorization.split("Bearer ")[1]
 
 
 def get_supabase(access_token: str = Depends(get_access_token)) -> SupabaseManager:
@@ -57,9 +56,8 @@ async def signin(email: str, password: str) -> str:
 
 
 @supabase_router.get("/supabase/refresh")
-async def refresh(request: Request) -> str:
+async def refresh(refresh_token: str = Cookie(...)) -> str:
     try:
-        refresh_token = request.cookies.get("refresh_token")
         supabase = SupabaseManager()
         tokens = supabase.refresh_access_token(refresh_token)
         logfire.info(f"refresh token user: {tokens["user_id"]}")
@@ -71,9 +69,8 @@ async def refresh(request: Request) -> str:
 
 
 @supabase_router.get("/supabase/signout")
-async def signout(request: Request) -> str:
+async def signout(access_token=Depends(get_access_token)) -> str:
     try:
-        access_token = get_access_token(request)
         supabase = get_supabase(access_token)
         user_id = supabase.get_user_id()
         supabase.supabase.auth.sign_out()
@@ -83,15 +80,12 @@ async def signout(request: Request) -> str:
 
         # リフレッシュトークンを削除
         response = JSONResponse(content={"message": "Sign out"})
-        response.set_cookie(
+        response.delete_cookie(
             key="refresh_token",
-            value="",
             httponly=True,
             secure=True,
             samesite="Lax",
-            max_age=0,
         )
-
         return response
     except HTTPException as e:
         raise e

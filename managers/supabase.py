@@ -14,24 +14,28 @@ class SupabaseManager:
             self.assert_session(access_token=access_token)
 
     def sign_in_with_password(self, email: str, password: str) -> dict:
-        response = self.supabase.auth.sign_in_with_password({"email": email, "password": password})
-        if not response.session:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        return {
-            "user_id": response.user.id,
-            "access_token": response.session.access_token,
-            "refresh_token": response.session.refresh_token,
-        }
+        try:
+            response = self.supabase.auth.sign_in_with_password(
+                {"email": email, "password": password}
+            )
+            return {
+                "user_id": response.user.id,
+                "access_token": response.session.access_token,
+                "refresh_token": response.session.refresh_token,
+            }
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=str(e))
 
     def refresh_access_token(self, refresh_token: str) -> dict:
-        response = self.supabase.auth.refresh_session(refresh_token)
-        if not response.session:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
-        return {
-            "user_id": response.user.id,
-            "access_token": response.session.access_token,
-            "refresh_token": response.session.refresh_token,
-        }
+        try:
+            response = self.supabase.auth.refresh_session(refresh_token)
+            return {
+                "user_id": response.user.id,
+                "access_token": response.session.access_token,
+                "refresh_token": response.session.refresh_token,
+            }
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=str(e))
 
     def assert_session(self, access_token: str) -> bool:
         response = self.supabase.auth.get_user(access_token)
