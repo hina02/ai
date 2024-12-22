@@ -15,13 +15,13 @@ class FileExtension(Enum):
     CSV = ".csv"
 
 
-def get_file_paths() -> list[str]:
+async def get_file_paths() -> list[str]:
     file_paths = glob.glob(f"{BASE_DIR}/**/*", recursive=True)
     relative_paths = [os.path.relpath(path, BASE_DIR) for path in file_paths]
     return relative_paths
 
 
-def read_file(file_path: str) -> str:
+async def read_file(file_path: str) -> str:
     with open(file_path, "r") as file:
         text = file.read()
         return text
@@ -35,7 +35,7 @@ def write_file(file_name: str, extension: FileExtension, text: str) -> str:
         return "Success"
 
 
-def execute_script_and_output_stdout(file_path: str) -> str:
+async def execute_script_and_output_stdout(file_path: str) -> str:
     with open(f"{BASE_DIR}/{file_path}", "r") as file:
         script = file.read()
         try:
