@@ -1,36 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
-import logfire
-from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext, Tool
 
-logfire.configure()
-
-
-class AgentFactory(BaseModel):
-    agents: dict = Field(default_factory=dict)
-
-    def get_agent_names(self) -> list[str]:
-        return list(self.agents.keys())
-
-    async def run_agent(self, name: str, instruction: str) -> str:
-        agent: Optional[Agent] = self.agents.get(name)
-        if agent:
-            assert isinstance(agent, Agent)
-            response = await agent.run(instruction)
-            return response.data
-        return "Agent not found"
-
-    async def create_agent(self, name: str, system_prompt: str) -> Agent:
-        agent = Agent("gemini-1.5-pro", name=name, system_prompt=system_prompt)
-        self.agents[name] = agent
-        return "Success"
-
-    async def save_agent(self):
-        """Save created agent(system_prompt) to database."""
-        pass
+from deps.agent_factory import AgentFactory
 
 
 @dataclass
@@ -79,13 +52,13 @@ def get_weather(_: RunContext):
     return "It's sunny today."
 
 
-def run_orchestrator_sample():
+async def run_orchestrator_sample() -> str:
     default_agents = {
         "get_today": Agent("openai:gpt-4o-mini", tools=[Tool(get_today)]),
         "get_weather": Agent("openai:gpt-4o-mini", tools=[Tool(get_weather)]),
     }
-    deps = FactoryDeps(tools=[], factory=AgentFactory(agents=default_agents))
-    return orchestrator.run_sync(
+    deps = FactoryDeps(factory=AgentFactory(agents=default_agents))
+    return await orchestrator.run(
         "Respond today's date and weather.",
         deps=deps,
     )
