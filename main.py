@@ -1,12 +1,10 @@
 import logfire
-from dotenv import load_dotenv
 from fastapi import FastAPI
 
+# from config import settings
 from routers.chat import chat_router
 from routers.supabase import supabase_router
 from routers.test import test_router
-
-load_dotenv()
 
 app = FastAPI()
 app.include_router(supabase_router)

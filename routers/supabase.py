@@ -1,9 +1,8 @@
-import os
-
 import logfire
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 
+from config import settings
 from managers.supabase import SupabaseManager
 
 supabase = None
@@ -20,8 +19,8 @@ def get_access_token(authorization: str = Header(...)) -> str:
 
 
 def get_supabase_dev() -> SupabaseManager:
-    email = os.environ.get("SUPABASE_DEV_EMAIL")
-    password = os.environ.get("SUPABASE_DEV_PASSWORD")
+    email = settings.supabase_dev_email
+    password = settings.supabase_dev_password
     global supabase
     if supabase is None:
         supabase = SupabaseManager()

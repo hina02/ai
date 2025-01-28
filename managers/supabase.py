@@ -1,15 +1,12 @@
-import os
-
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from supabase import Client, create_client
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_ANON_KEY")
+from config import settings
 
 
 class SupabaseManager:
     def __init__(self, access_token: str | None = None):
-        self.supabase: Client = create_client(url, key)
+        self.supabase: Client = create_client(settings.supabase_url, settings.supabase_anon_key)
         if access_token:
             self.assert_session(access_token=access_token)
 
