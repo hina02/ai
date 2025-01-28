@@ -4,12 +4,14 @@ from fastapi import FastAPI
 
 from routers.chat import chat_router
 from routers.supabase import supabase_router
+from routers.test import test_router
 
 load_dotenv()
 
 app = FastAPI()
 app.include_router(supabase_router)
 app.include_router(chat_router)
+app.include_router(test_router)
 
 logfire.configure()
 logfire.instrument_asyncpg()
