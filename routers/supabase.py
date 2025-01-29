@@ -1,11 +1,11 @@
-import os
-
 import logfire
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 
+from config import settings
 from managers.supabase import SupabaseManager
 
+supabase = None
 supabase_manager_cache = {}
 
 supabase_router = APIRouter()
@@ -16,6 +16,16 @@ def get_access_token(authorization: str = Header(...)) -> str:
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
     return authorization.split("Bearer ")[1]
+
+
+def get_supabase_dev() -> SupabaseManager:
+    email = settings.supabase_dev_email
+    password = settings.supabase_dev_password
+    global supabase
+    if supabase is None:
+        supabase = SupabaseManager()
+        supabase.sign_in_with_password(email, password)
+    return supabase
 
 
 def get_supabase(access_token: str = Depends(get_access_token)) -> SupabaseManager:

@@ -1,15 +1,12 @@
-import os
-
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from supabase import Client, create_client
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_ANON_KEY")
+from config import settings
 
 
 class SupabaseManager:
     def __init__(self, access_token: str | None = None):
-        self.supabase: Client = create_client(url, key)
+        self.supabase: Client = create_client(settings.supabase_url, settings.supabase_anon_key)
         if access_token:
             self.assert_session(access_token=access_token)
 
@@ -47,3 +44,17 @@ class SupabaseManager:
     def get_user_id(self) -> str | None:
         user = self.supabase.auth.get_user()
         return user.user.id if user else None
+
+    def get_entity(self, table: str, name: str) -> dict | None:
+        response = (
+            self.supabase.from_(table)
+            .select("name, profile")
+            .eq("name", name)
+            .maybe_single()
+            .execute()
+        )
+        return response.data if response else None
+
+    def save_entity(self, table: str, name: str, profile: dict):
+        character = {"name": name, "profile": profile}
+        self.supabase.from_(table).upsert(character).execute()
