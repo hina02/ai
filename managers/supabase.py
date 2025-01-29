@@ -44,3 +44,17 @@ class SupabaseManager:
     def get_user_id(self) -> str | None:
         user = self.supabase.auth.get_user()
         return user.user.id if user else None
+
+    def get_entity(self, table: str, name: str) -> dict | None:
+        response = (
+            self.supabase.from_(table)
+            .select("name, profile")
+            .eq("name", name)
+            .maybe_single()
+            .execute()
+        )
+        return response.data if response else None
+
+    def save_entity(self, table: str, name: str, profile: dict):
+        character = {"name": name, "profile": profile}
+        self.supabase.from_(table).upsert(character).execute()
